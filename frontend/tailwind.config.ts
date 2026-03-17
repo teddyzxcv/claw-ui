@@ -9,20 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        shell: "#140606",
-        mist: "#fff6f2",
-        panel: "#180808",
-        panelAlt: "#2b0b0b",
-        accent: "#ff6a3d",
-        ember: "#ff3d30",
-        moss: "#76caa8",
+        shell: "#0f0f10",
+        panel: "#1a1a1d",
+        panelAlt: "#232326",
+        line: "#2a2a2e",
+        text: "#ffffff",
+        muted: "#b0b0b5",
+        quiet: "#6b6b70",
+        coral: "#ff4d4d",
+        coralMid: "#e63946",
+        coralDark: "#991b1b",
       },
       boxShadow: {
-        glow: "0 24px 64px rgba(0, 0, 0, 0.35)",
+        glow: "0 24px 80px rgba(0, 0, 0, 0.34)",
       },
       fontFamily: {
-        sans: ["Avenir Next", "Segoe UI", "sans-serif"],
-        mono: ["IBM Plex Mono", "Menlo", "monospace"],
+        sans: ["Inter", "\"SF Pro Display\"", "\"Segoe UI\"", "sans-serif"],
+        mono: ["\"JetBrains Mono\"", "\"SFMono-Regular\"", "Menlo", "monospace"],
       },
     },
   },

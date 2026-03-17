@@ -13,8 +13,10 @@ export default function Layout({ state }: LayoutProps) {
 
   if (!hasWidgets) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center rounded-[28px] border border-dashed border-white/[0.06] bg-white/[0.02]">
-        <p className="text-sm text-slate-500">No content yet</p>
+      <div className="glass-panel flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-line">
+        <div className="text-center">
+          <p className="text-sm text-muted">No content yet.</p>
+        </div>
       </div>
     );
   }
@@ -24,14 +26,14 @@ export default function Layout({ state }: LayoutProps) {
   const gridColsClass = filled.length > 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1";
 
   return (
-    <div className={`grid ${gridColsClass} items-start gap-3`}>
+    <div className={`grid ${gridColsClass} items-start gap-4`}>
       {filled.map((column, colIdx) => (
-        <div key={column.id} className="flex flex-col gap-3">
+        <div key={column.id} className="flex flex-col gap-4">
           {column.widget_ids.map((widgetId, i) => (
             <div
               key={widgetId}
               className="stagger-in"
-              style={{ animationDelay: `${colIdx * 60 + i * 60}ms` }}
+              style={{ animationDelay: `${colIdx * 45 + i * 45}ms` }}
             >
               <WidgetRenderer widgetId={widgetId} state={state} />
             </div>
@@ -41,4 +43,3 @@ export default function Layout({ state }: LayoutProps) {
     </div>
   );
 }
-

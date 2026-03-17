@@ -4,14 +4,17 @@
 
 :root {
   color-scheme: dark;
-  --bg-top: #140606;
-  --bg-bottom: #2b0b0b;
-  --panel: rgba(24, 8, 8, 0.78);
-  --panel-border: rgba(255, 138, 91, 0.22);
-  --text-main: #fff6f2;
-  --text-muted: #e6b6a6;
-  --accent: #ff6a3d;
-  --accent-soft: rgba(255, 106, 61, 0.14);
+  --bg-primary: #0f0f10;
+  --bg-secondary: #1a1a1d;
+  --bg-tertiary: #232326;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b5;
+  --text-muted: #6b6b70;
+  --border: #2a2a2e;
+  --coral-bright: #ff4d4d;
+  --coral-mid: #e63946;
+  --coral-dark: #991b1b;
+  --card-radius: 12px;
 }
 
 * {
@@ -25,12 +28,12 @@ body {
 
 body {
   margin: 0;
-  color: var(--text-main);
+  color: var(--text-primary);
   background:
-    radial-gradient(circle at top left, rgba(255, 106, 61, 0.16), transparent 35%),
-    radial-gradient(circle at 80% 12%, rgba(255, 61, 48, 0.18), transparent 26%),
-    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
+    radial-gradient(circle at top left, rgba(230, 57, 70, 0.14), transparent 28%),
+    radial-gradient(circle at 85% 10%, rgba(255, 77, 77, 0.12), transparent 24%),
+    linear-gradient(180deg, #111214 0%, var(--bg-primary) 38%, #0c0c0d 100%);
+  font-family: "Inter", "SF Pro Display", "Segoe UI", sans-serif;
 }
 
 a {
@@ -39,19 +42,35 @@ a {
 }
 
 .glass-panel {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  backdrop-filter: blur(18px);
+  background: linear-gradient(180deg, rgba(30, 30, 33, 0.94), rgba(22, 22, 25, 0.96));
+  border: 1px solid var(--border);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(16px);
 }
 
 .stagger-in {
-  animation: rise 420ms ease-out both;
+  animation: rise 220ms ease-in-out both;
+}
+
+.agent-surface {
+  position: relative;
+}
+
+.agent-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(120deg, rgba(255, 77, 77, 0.08), transparent 26%);
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -67,7 +86,7 @@ a {
     background: transparent;
   }
   .thin-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 4px;
   }
 }

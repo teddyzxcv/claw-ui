@@ -32,22 +32,22 @@ export default function TodoWidget({ widget }: TodoWidgetProps) {
   return (
     <div className="space-y-3">
       {items.length === 0 ? (
-        <p className="text-sm text-slate-400">No checklist items yet.</p>
+        <p className="text-sm text-quiet">No checklist items yet.</p>
       ) : (
         items.map((item) => (
           <label
             key={item.id}
-            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 transition hover:border-white/15"
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-panelAlt px-4 py-3 transition hover:border-coralMid/55"
           >
             <input
               type="checkbox"
               checked={Boolean(item.done)}
               onChange={() => void toggleItem(item.id)}
-              className="h-4 w-4 rounded border-white/20 bg-transparent text-accent focus:ring-accent"
+              className="h-4 w-4 rounded border-line bg-transparent text-coral focus:ring-coral"
             />
             <span
               className={`text-sm ${
-                item.done ? "text-slate-500 line-through" : "text-slate-100"
+                item.done ? "text-quiet line-through" : "text-text"
               }`}
             >
               {item.label}

@@ -9,33 +9,33 @@ export default function CryptoWidget({ widget }: CryptoWidgetProps) {
   const currency = (widget.config.currency as string | undefined) ?? "USD";
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/8">
-      <div className="grid grid-cols-[1.2fr_1fr_0.9fr] bg-white/[0.04] px-4 py-3 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+    <div className="overflow-hidden rounded-xl border border-line">
+      <div className="grid grid-cols-[1.2fr_1fr_0.9fr] bg-panelAlt px-4 py-3 text-[11px] uppercase tracking-[0.18em] text-quiet">
         <span>Asset</span>
         <span>Price</span>
         <span className="text-right">24h</span>
       </div>
-      <div className="divide-y divide-white/8">
+      <div className="divide-y divide-line">
         {items.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-slate-400">No market data yet.</div>
+          <div className="px-4 py-6 text-sm text-quiet">No market data yet.</div>
         ) : (
           items.map((item) => {
             const positive = (item.change_24h ?? 0) >= 0;
             return (
               <div
                 key={item.symbol}
-                className="grid grid-cols-[1.2fr_1fr_0.9fr] items-center px-4 py-3 text-sm"
+                className="grid grid-cols-[1.2fr_1fr_0.9fr] items-center bg-panel px-4 py-3 text-sm"
               >
                 <div>
-                  <p className="font-medium text-white">{item.symbol}</p>
-                  <p className="text-xs text-slate-400">{item.name ?? "Crypto asset"}</p>
+                  <p className="text-text">{item.symbol}</p>
+                  <p className="text-xs text-quiet">{item.name ?? "Crypto asset"}</p>
                 </div>
-                <p className="text-slate-200">
+                <p className="text-secondary">
                   {currency} {item.price.toLocaleString()}
                 </p>
                 <p
                   className={`text-right font-medium ${
-                    positive ? "text-moss" : "text-ember"
+                    positive ? "text-coral" : "text-coralDark"
                   }`}
                 >
                   {positive ? "+" : ""}
