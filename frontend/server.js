@@ -11,7 +11,7 @@ const backendOrigin = (
   "http://127.0.0.1:8000"
 ).replace(/\/$/, "");
 
-const proxiedPrefixes = ["/state", "/event", "/health", "/auip", "/apply-change"];
+const proxiedPrefixes = ["/state", "/event", "/health", "/auip"];
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();

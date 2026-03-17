@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { useUIStore } from "@/lib/store";
+import type { UIStateData } from "@/lib/types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
@@ -25,11 +26,12 @@ export const postUIEvent = async (payload: unknown) => {
   return response.json();
 };
 
-export const useRealtimeUI = () => {
+export const useRealtimeUI = (initialState?: UIStateData) => {
   const setState = useUIStore((store) => store.setState);
   const setConnectionState = useUIStore((store) => store.setConnectionState);
   const setLastError = useUIStore((store) => store.setLastError);
   const refreshTimerRef = useRef<number | null>(null);
+  const skipInitialFetchRef = useRef(Boolean(initialState));
 
   useEffect(() => {
     let active = true;
@@ -67,8 +69,13 @@ export const useRealtimeUI = () => {
       }
     };
 
-    setConnectionState("connecting");
-    void sync();
+    setConnectionState(skipInitialFetchRef.current ? "connected" : "connecting");
+    if (skipInitialFetchRef.current) {
+      skipInitialFetchRef.current = false;
+      refreshTimerRef.current = window.setTimeout(sync, POLL_INTERVAL_MS);
+    } else {
+      void sync();
+    }
 
     return () => {
       active = false;

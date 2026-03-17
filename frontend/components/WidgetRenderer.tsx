@@ -6,11 +6,12 @@ import TextWidget from "@/components/widgets/TextWidget";
 import TodoWidget from "@/components/widgets/TodoWidget";
 import WeatherWidget from "@/components/widgets/WeatherWidget";
 import { useUIStore } from "@/lib/store";
-import type { UIEvent, Widget } from "@/lib/types";
+import type { UIEvent, UIStateData, Widget } from "@/lib/types";
 import { postUIEvent } from "@/lib/ws";
 
 type WidgetRendererProps = {
   widgetId: string;
+  state: UIStateData;
 };
 
 const registry: Record<string, (props: { widget: Widget }) => JSX.Element> = {
@@ -21,9 +22,10 @@ const registry: Record<string, (props: { widget: Widget }) => JSX.Element> = {
   "content:text": TextWidget,
 };
 
-export default function WidgetRenderer({ widgetId }: WidgetRendererProps) {
-  const widget = useUIStore((store) => store.state.widgets[widgetId]);
+export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps) {
+  const liveWidget = useUIStore((store) => store.state.widgets[widgetId]);
   const setLastError = useUIStore((store) => store.setLastError);
+  const widget = liveWidget ?? state.widgets[widgetId];
 
   if (!widget) {
     return null;

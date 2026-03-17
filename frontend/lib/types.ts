@@ -95,13 +95,6 @@ export type PatchUIMessage = {
 
 export type UIMessage = SetUIMessage | PatchUIMessage;
 
-export type ApplyChangeResponse = {
-  ok: true;
-  applied: boolean;
-  revision: number;
-  state?: UIStateData;
-};
-
 export type WidgetRemovedEvent = {
   type: "ui_event";
   payload: {

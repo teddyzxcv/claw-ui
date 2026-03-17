@@ -1,10 +1,14 @@
 "use client";
 
 import WidgetRenderer from "@/components/WidgetRenderer";
-import { useUIStore } from "@/lib/store";
+import type { UIStateData } from "@/lib/types";
 
-export default function Layout() {
-  const columns = useUIStore((store) => store.state.views.main?.layout.columns ?? []);
+type LayoutProps = {
+  state: UIStateData;
+};
+
+export default function Layout({ state }: LayoutProps) {
+  const columns = state.views.main?.layout.columns ?? [];
 
   return (
     <div className="grid gap-5 md:grid-cols-2">
@@ -35,7 +39,11 @@ export default function Layout() {
               </div>
             ) : (
               column.widget_ids.map((widgetId) => (
-                <WidgetRenderer key={widgetId} widgetId={widgetId} />
+                <WidgetRenderer
+                  key={widgetId}
+                  widgetId={widgetId}
+                  state={state}
+                />
               ))
             )}
           </div>

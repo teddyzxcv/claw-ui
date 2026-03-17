@@ -94,10 +94,9 @@ const applyOperation = (draft: UIStateData, operation: Operation) => {
 
 type UIStore = {
   state: UIStateData;
-  revision: number;
   connectionState: ConnectionState;
   lastError: string | null;
-  setState: (state: UIStateData, revision?: number) => void;
+  setState: (state: UIStateData) => void;
   applyPatch: (operations: Operation[]) => void;
   setConnectionState: (value: UIStore["connectionState"]) => void;
   setLastError: (value: string | null) => void;
@@ -111,14 +110,9 @@ export type ConnectionState =
 
 export const useUIStore = create<UIStore>((set) => ({
   state: defaultState(),
-  revision: -1,
   connectionState: "connecting",
   lastError: null,
-  setState: (state, revision) =>
-    set((current) => ({
-      state,
-      revision: revision ?? current.revision,
-    })),
+  setState: (state) => set({ state }),
   applyPatch: (operations) =>
     set((current) => {
       const nextState = cloneState(current.state);

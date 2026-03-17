@@ -1,6 +1,6 @@
 ---
 name: claw-ui
-description: Use this skill when OpenClaw needs to control its dashboard UI through the AUIP backend protocol, especially to inspect state, send `POST /auip` patches, and rely on `GET /apply-change` for HTTP-based sync.
+description: Use this skill when OpenClaw needs to inspect or change the live dashboard through the AUIP backend, especially to fetch `GET /state`, choose between `set_ui` and `patch_ui`, and post safe validated payloads.
 ---
 
 # Claw UI
@@ -11,34 +11,31 @@ Use this skill when OpenClaw needs to inspect or change the live Claw dashboard 
 
 Use it for requests such as:
 
-- inspect the current dashboard state before making a change
-- add, update, move, or remove dashboard widgets
-- replace the full dashboard state
-- rearrange widgets between columns
+- inspect the current dashboard before changing it
+- add, update, move, or remove widgets through AUIP
+- replace the full dashboard layout
+- reorganize columns and widget ordering
 - craft or validate AUIP payloads and `curl` commands
-- interpret frontend UI events that should trigger follow-up AUIP patches or state refreshes
+- react to frontend UI events that require follow-up state changes
 
-Do not use it for unrelated frontend styling or React component changes inside the codebase unless the user is explicitly asking for AUIP-driven dashboard state changes.
+Do not use it for ordinary frontend component or styling work unless the user explicitly wants AUIP-driven live dashboard edits.
 
-## Endpoint and envelope
-
-The dashboard syncs through the backend:
+## Endpoints
 
 ```text
 Frontend: http://localhost:3000
 Backend:  http://localhost:8000
 ```
 
-If the environment uses a different host or port, substitute that value consistently in examples and commands.
+If the environment uses different ports or hosts, substitute them consistently.
 
 HTTP endpoints:
 
-- `GET /state`: fetch the full current UI state before planning a patch
-- `POST /auip`: submit `set_ui` or `patch_ui` mutations
+- `GET /state`: inspect the current UI state
+- `POST /auip`: submit `set_ui` or `patch_ui`
 - `POST /event`: submit user-originated UI events
-- `GET /apply-change?since=<revision>`: fetch the latest applied state when the caller needs to know whether something changed
 
-Send UI mutations to `POST /auip` with this envelope:
+Send mutations to `POST /auip` with this envelope:
 
 ```json
 {
@@ -53,20 +50,56 @@ Send UI mutations to `POST /auip` with this envelope:
 
 Supported AUIP message types:
 
-- `set_ui`: replace the entire UI state
+- `set_ui`: replace the full UI state
 - `patch_ui`: apply incremental operations
 
 ## Default workflow
 
-1. Determine whether the user wants a full replacement (`set_ui`) or an incremental change (`patch_ui`).
-2. If the current layout or widget ids matter, read `GET /state` first instead of guessing.
-3. Preserve `protocol_version: "1.0"` and `target.view_id: "main"`.
-4. Use only supported widget kinds, variants, and operations.
-5. For `patch_ui`, keep the patch to at most 20 operations.
-6. Before updating, moving, or removing a widget, make sure the target widget already exists in the current UI state.
-7. Before adding a widget, choose a fresh widget id and a valid placement.
-8. After sending a mutation, assume clients will refresh over normal HTTP via `GET /apply-change`; do not rely on websockets.
-9. Return the final payload or `curl` command in a form the user can run directly.
+1. Inspect first: always fetch `GET /state` before any nontrivial UI mutation.
+2. Summarize the current state briefly: columns, widget ids, and any constraints that matter.
+3. Write a short layout plan before generating AUIP payloads. If multiple columns are involved, name each column's role clearly, for example `col_1 = product news`, `col_2 = industry moves`.
+4. Choose mutation type deliberately:
+   - prefer `set_ui` for empty dashboards, full resets, or clear redesign requests
+   - prefer `patch_ui` for small edits to existing known widgets
+5. Preserve `protocol_version: "1.0"` and `target.view_id: "main"`.
+6. Use only supported widget kinds, variants, and operations.
+7. For `patch_ui`, keep patches focused and capped at 20 operations.
+8. After mutation, fetch `GET /state` again to verify the result instead of assuming it applied correctly.
+9. Return ready-to-run commands or payload files the user can use immediately.
+
+## Mutation choice
+
+Choose `set_ui` when:
+
+- the dashboard is empty or nearly empty
+- the user asks for a full redesign, reset, or replacement
+- the change would be simpler and safer as one complete state
+- you want to define layout and widgets together from scratch
+
+Choose `patch_ui` when:
+
+- the existing dashboard already contains the target widgets
+- the user wants a small edit such as rename, move, remove, or refresh content
+- widget ids and placement are known from fresh `GET /state` output
+- the change can be expressed as a few precise operations
+
+If you do not know the current widget ids or layout, inspect with `GET /state` before choosing `patch_ui`.
+
+## Layout planning rule
+
+Before producing AUIP JSON, include a short plan in the response:
+
+- current state snapshot: what exists now
+- intended layout: what will change
+- column roles: what each column is for
+- mutation mode: why `set_ui` or `patch_ui` is the safer choice
+
+Favor semantic column roles over vague labels. Good examples:
+
+- `col_1`: product news
+- `col_2`: industry moves
+- `col_1`: market snapshot
+- `col_2`: operator checklist
 
 ## Supported widget catalog
 
@@ -139,174 +172,140 @@ Only use these widget types. Do not invent new `kind` or `variant` values.
 
 ## Supported operations
 
-### `add_widget`
+Use only these `patch_ui` operations:
 
-```json
-{
-  "op": "add_widget",
-  "widget": {
-    "id": "w_news",
-    "kind": "feed",
-    "variant": "news",
-    "title": "AI News",
-    "config": {}
-  },
-  "placement": {
-    "column_id": "col_1",
-    "position": 0
-  }
-}
-```
+- `add_widget`
+- `remove_widget`
+- `move_widget`
+- `update_widget`
+- `set_layout`
 
-### `remove_widget`
-
-```json
-{
-  "op": "remove_widget",
-  "widget_id": "w_news"
-}
-```
-
-### `move_widget`
-
-```json
-{
-  "op": "move_widget",
-  "widget_id": "w_news",
-  "placement": {
-    "column_id": "col_2",
-    "position": 0
-  }
-}
-```
-
-### `update_widget`
-
-```json
-{
-  "op": "update_widget",
-  "widget_id": "w_news",
-  "changes": {
-    "title": "Top AI News",
-    "config": {
-      "items": []
-    }
-  }
-}
-```
-
-### `set_layout`
-
-```json
-{
-  "op": "set_layout",
-  "layout": {
-    "columns": [
-      {
-        "id": "col_1",
-        "widget_ids": ["w_news"]
-      },
-      {
-        "id": "col_2",
-        "widget_ids": []
-      }
-    ]
-  }
-}
-```
+Before `update_widget`, `move_widget`, or `remove_widget`, confirm the widget id exists in fresh state.
 
 ## Safety rules
 
+- always fetch `GET /state` before any nontrivial mutation
+- always fetch `GET /state` after mutating to verify the result
 - keep `protocol_version` at `1.0`
 - keep `target.view_id` equal to `"main"`
-- use only `col_1` and `col_2` unless the current UI state shows a different layout
+- use only `col_1` and `col_2` unless current state shows a different layout
 - never reuse an existing widget id for a new widget
 - never move, update, or remove a widget unless it already exists
 - never exceed 20 operations in one patch
 - never invent unsupported widget schemas
-- never assume websocket delivery exists
+- never rely on websocket delivery
+- never hand-escape large inline JSON blobs in shell commands
+
+## Large payload guidance
+
+For larger updates, do not manually embed big JSON bodies inside a shell string. That is fragile and commonly causes broken escaping.
+
+Prefer one of these patterns:
+
+- save JSON to a file and post with `curl --data @payload.json`
+- generate JSON with a serializer before posting, then send the serialized file or output
+
+Safer file-based pattern:
+
+```bash
+curl -X POST http://localhost:8000/auip \
+  -H "Content-Type: application/json" \
+  --data @payload.json
+```
+
+If a payload contains many nested objects, quotes, or multiline text, prefer file-based posting by default.
 
 ## Response style
 
-When fulfilling a user request with this skill:
+When using this skill, make the response actionable for iterative dashboard design:
 
-- prefer a complete JSON payload or a ready-to-run `curl` command
-- prefer checking `GET /state` before destructive changes
-- include only the fields required for the requested change
-- if the current widget state is unknown, state the assumption before issuing destructive operations
-- if the user asks for multiple changes, combine them into a single `patch_ui` request when practical
+1. Start with a short state summary from `GET /state`.
+2. Give a compact layout plan before the AUIP payload.
+3. State whether you are using `set_ui` or `patch_ui`, and why.
+4. Return a ready-to-run command or a clean JSON payload.
+5. End with a verification command using `GET /state`.
 
-## `curl` recipes
+Prefer short, practical responses that help the user iterate quickly. When the request is design-oriented, suggest clear column roles and a minimal next step instead of dumping a large speculative payload.
 
-### Add a text widget
+## Ready-to-run examples
+
+### Inspect current state
+
+```bash
+curl -sS http://localhost:8000/state
+```
+
+### Replace an empty dashboard with a two-column redesign
+
+Plan:
+
+- `col_1`: product news
+- `col_2`: industry moves
+- use `set_ui` because this is a full layout definition from scratch
+
+```json
+{
+  "protocol_version": "1.0",
+  "type": "set_ui",
+  "target": { "view_id": "main" },
+  "payload": {
+    "state": {
+      "views": {
+        "main": {
+          "layout": {
+            "columns": [
+              { "id": "col_1", "widget_ids": ["w_product_news"] },
+              { "id": "col_2", "widget_ids": ["w_industry_moves"] }
+            ]
+          }
+        }
+      },
+      "widgets": {
+        "w_product_news": {
+          "id": "w_product_news",
+          "kind": "feed",
+          "variant": "news",
+          "title": "Product News",
+          "config": {
+            "items": []
+          }
+        },
+        "w_industry_moves": {
+          "id": "w_industry_moves",
+          "kind": "feed",
+          "variant": "news",
+          "title": "Industry Moves",
+          "config": {
+            "items": []
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Post it safely:
 
 ```bash
 curl -X POST http://localhost:8000/auip \
   -H "Content-Type: application/json" \
-  -d '{
-    "protocol_version": "1.0",
-    "type": "patch_ui",
-    "target": { "view_id": "main" },
-    "payload": {
-      "operations": [
-        {
-          "op": "add_widget",
-          "widget": {
-            "id": "w_note",
-            "kind": "content",
-            "variant": "text",
-            "title": "Ops Note",
-            "config": {
-              "content": "Backend online.\nFrontend synced.\nReady for AUIP patches."
-            }
-          },
-          "placement": {
-            "column_id": "col_1",
-            "position": 0
-          }
-        }
-      ]
-    }
-  }'
+  --data @payload.json
 ```
 
-### Add a todo widget
+Verify:
 
 ```bash
-curl -X POST http://localhost:8000/auip \
-  -H "Content-Type: application/json" \
-  -d '{
-    "protocol_version": "1.0",
-    "type": "patch_ui",
-    "target": { "view_id": "main" },
-    "payload": {
-      "operations": [
-        {
-          "op": "add_widget",
-          "widget": {
-            "id": "w_todo",
-            "kind": "productivity",
-            "variant": "todo",
-            "title": "Launch Checklist",
-            "config": {
-              "items": [
-                { "id": "task_1", "label": "Start backend", "done": true },
-                { "id": "task_2", "label": "Open dashboard", "done": true },
-                { "id": "task_3", "label": "Send first AUIP patch", "done": false }
-              ]
-            }
-          },
-          "placement": {
-            "column_id": "col_2",
-            "position": 0
-          }
-        }
-      ]
-    }
-  }'
+curl -sS http://localhost:8000/state
 ```
 
-### Update an existing widget
+### Patch an existing known widget
+
+Plan:
+
+- keep the current layout
+- update only `w_note`
+- use `patch_ui` because the widget id is already known from fresh state
 
 ```bash
 curl -X POST http://localhost:8000/auip \
@@ -332,49 +331,36 @@ curl -X POST http://localhost:8000/auip \
   }'
 ```
 
-### Move a widget
+Verify:
 
 ```bash
-curl -X POST http://localhost:8000/auip \
-  -H "Content-Type: application/json" \
-  -d '{
-    "protocol_version": "1.0",
-    "type": "patch_ui",
-    "target": { "view_id": "main" },
-    "payload": {
-      "operations": [
-        {
-          "op": "move_widget",
-          "widget_id": "w_note",
-          "placement": {
-            "column_id": "col_2",
-            "position": 1
-          }
-        }
-      ]
-    }
-  }'
+curl -sS http://localhost:8000/state
 ```
 
-### Remove a widget
+## Troubleshooting
 
-```bash
-curl -X POST http://localhost:8000/auip \
-  -H "Content-Type: application/json" \
-  -d '{
-    "protocol_version": "1.0",
-    "type": "patch_ui",
-    "target": { "view_id": "main" },
-    "payload": {
-      "operations": [
-        {
-          "op": "remove_widget",
-          "widget_id": "w_note"
-        }
-      ]
-    }
-  }'
-```
+### JSON decode error
+
+- most often caused by broken quoting or hand-escaped inline JSON
+- move the payload into a file and post with `--data @payload.json`
+- if generating JSON programmatically, serialize it instead of manually concatenating strings
+
+### Connection failure
+
+- confirm the backend is running on `http://localhost:8000`
+- retry `curl -sS http://localhost:8000/state`
+- if ports differ in the environment, update every example consistently
+
+### Unknown widget ID during patching
+
+- fetch `GET /state` again and confirm the widget still exists
+- switch to `set_ui` if the dashboard was reset or the intended change is effectively a redesign
+- do not guess widget ids
+
+### Unsupported widget kind or variant
+
+- use only the widget catalog in this skill
+- if the requested widget does not map cleanly to a supported schema, say so and offer the closest supported alternative
 
 ## Frontend event follow-up
 
@@ -385,5 +371,4 @@ Known events:
 - `widget_removed`
 - `todo_toggled`
 
-Treat these as user-originated state changes that may require a follow-up AUIP patch to keep the UI and backend state aligned.
-If a caller needs to confirm the resulting UI state, check `GET /apply-change` or `GET /state` over HTTP.
+Treat these as user-originated state changes that may require follow-up AUIP mutations. If the resulting UI state matters, confirm it with `GET /state`.

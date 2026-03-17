@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Layout from "@/components/Layout";
 import { type ConnectionState, useUIStore } from "@/lib/store";
+import type { UIStateData } from "@/lib/types";
 import { useRealtimeUI } from "@/lib/ws";
 
 const connectionTone: Record<ConnectionState, string> = {
@@ -13,13 +14,24 @@ const connectionTone: Record<ConnectionState, string> = {
   offline: "border-white/10 bg-white/5 text-slate-300",
 };
 
-export default function Dashboard() {
-  useRealtimeUI();
+type DashboardProps = {
+  initialState: UIStateData;
+};
 
-  const state = useUIStore((store) => store.state);
+export default function Dashboard({ initialState }: DashboardProps) {
+  const setState = useUIStore((store) => store.setState);
+  const liveState = useUIStore((store) => store.state);
+
+  useEffect(() => {
+    setState(initialState);
+  }, [initialState, setState]);
+
+  useRealtimeUI(initialState);
+
   const connectionState = useUIStore((store) => store.connectionState);
   const lastError = useUIStore((store) => store.lastError);
   const [selectedColumn, setSelectedColumn] = useState<string>("col_1");
+  const state = Object.keys(liveState.widgets).length > 0 ? liveState : initialState;
 
   const totals = useMemo(() => {
     const widgetCount = Object.keys(state.widgets).length;
@@ -115,7 +127,7 @@ export default function Dashboard() {
         </section>
 
         <section className="stagger-in" style={{ animationDelay: "120ms" }}>
-          <Layout />
+          <Layout state={state} />
         </section>
       </div>
     </main>
