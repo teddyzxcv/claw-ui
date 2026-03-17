@@ -23,10 +23,10 @@ services:
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
-      PORT: 3000
+      PORT: 3001
       BACKEND_ORIGIN: http://backend:8000
     ports:
-      - "3000:3001"
+      - "3001:3001"
     depends_on:
       backend:
         condition: service_healthy
