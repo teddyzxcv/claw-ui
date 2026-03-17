@@ -75,10 +75,13 @@ const applyOperation = (draft: UIStateData, operation: Operation) => {
       if (!widget) {
         return;
       }
+      const sanitizedChanges = Object.fromEntries(
+        Object.entries(operation.changes).filter(([, value]) => value != null),
+      );
       draft.widgets[operation.widget_id] = {
         ...widget,
-        ...operation.changes,
-        config: operation.changes.config ?? widget.config,
+        ...sanitizedChanges,
+        config: sanitizedChanges.config ?? widget.config,
       } as Widget;
       return;
     }
@@ -91,9 +94,10 @@ const applyOperation = (draft: UIStateData, operation: Operation) => {
 
 type UIStore = {
   state: UIStateData;
+  revision: number;
   connectionState: ConnectionState;
   lastError: string | null;
-  setState: (state: UIStateData) => void;
+  setState: (state: UIStateData, revision?: number) => void;
   applyPatch: (operations: Operation[]) => void;
   setConnectionState: (value: UIStore["connectionState"]) => void;
   setLastError: (value: string | null) => void;
@@ -107,9 +111,14 @@ export type ConnectionState =
 
 export const useUIStore = create<UIStore>((set) => ({
   state: defaultState(),
+  revision: -1,
   connectionState: "connecting",
   lastError: null,
-  setState: (state) => set({ state }),
+  setState: (state, revision) =>
+    set((current) => ({
+      state,
+      revision: revision ?? current.revision,
+    })),
   applyPatch: (operations) =>
     set((current) => {
       const nextState = cloneState(current.state);

@@ -1,21 +1,22 @@
 ---
 name: claw-ui
-description: Use this skill when working with the OpenClaw dashboard UI through the AUIP backend protocol, especially to create, update, move, remove, or replace widgets by sending `POST /auip` requests with valid widget schemas and layout operations.
+description: Use this skill when OpenClaw needs to control its dashboard UI through the AUIP backend protocol, especially to inspect state, send `POST /auip` patches, and rely on `GET /apply-change` for HTTP-based sync.
 ---
 
 # Claw UI
 
-Use this skill when the user wants to change the live Claw dashboard by sending AUIP messages to the backend UI gateway.
+Use this skill when OpenClaw needs to inspect or change the live Claw dashboard through the backend UI gateway.
 
 ## When to use this skill
 
 Use it for requests such as:
 
+- inspect the current dashboard state before making a change
 - add, update, move, or remove dashboard widgets
 - replace the full dashboard state
 - rearrange widgets between columns
 - craft or validate AUIP payloads and `curl` commands
-- interpret frontend UI events that should trigger follow-up AUIP patches
+- interpret frontend UI events that should trigger follow-up AUIP patches or state refreshes
 
 Do not use it for unrelated frontend styling or React component changes inside the codebase unless the user is explicitly asking for AUIP-driven dashboard state changes.
 
@@ -29,6 +30,13 @@ Backend:  http://localhost:8000
 ```
 
 If the environment uses a different host or port, substitute that value consistently in examples and commands.
+
+HTTP endpoints:
+
+- `GET /state`: fetch the full current UI state before planning a patch
+- `POST /auip`: submit `set_ui` or `patch_ui` mutations
+- `POST /event`: submit user-originated UI events
+- `GET /apply-change?since=<revision>`: fetch the latest applied state when the caller needs to know whether something changed
 
 Send UI mutations to `POST /auip` with this envelope:
 
@@ -51,12 +59,14 @@ Supported AUIP message types:
 ## Default workflow
 
 1. Determine whether the user wants a full replacement (`set_ui`) or an incremental change (`patch_ui`).
-2. Preserve `protocol_version: "1.0"` and `target.view_id: "main"`.
-3. Use only supported widget kinds, variants, and operations.
-4. For `patch_ui`, keep the patch to at most 20 operations.
-5. Before updating, moving, or removing a widget, make sure the target widget already exists in the current UI state.
-6. Before adding a widget, choose a fresh widget id and a valid placement.
-7. Return the final payload or `curl` command in a form the user can run directly.
+2. If the current layout or widget ids matter, read `GET /state` first instead of guessing.
+3. Preserve `protocol_version: "1.0"` and `target.view_id: "main"`.
+4. Use only supported widget kinds, variants, and operations.
+5. For `patch_ui`, keep the patch to at most 20 operations.
+6. Before updating, moving, or removing a widget, make sure the target widget already exists in the current UI state.
+7. Before adding a widget, choose a fresh widget id and a valid placement.
+8. After sending a mutation, assume clients will refresh over normal HTTP via `GET /apply-change`; do not rely on websockets.
+9. Return the final payload or `curl` command in a form the user can run directly.
 
 ## Supported widget catalog
 
@@ -214,12 +224,14 @@ Only use these widget types. Do not invent new `kind` or `variant` values.
 - never move, update, or remove a widget unless it already exists
 - never exceed 20 operations in one patch
 - never invent unsupported widget schemas
+- never assume websocket delivery exists
 
 ## Response style
 
 When fulfilling a user request with this skill:
 
 - prefer a complete JSON payload or a ready-to-run `curl` command
+- prefer checking `GET /state` before destructive changes
 - include only the fields required for the requested change
 - if the current widget state is unknown, state the assumption before issuing destructive operations
 - if the user asks for multiple changes, combine them into a single `patch_ui` request when practical
@@ -311,7 +323,7 @@ curl -X POST http://localhost:8000/auip \
           "changes": {
             "title": "Ops Summary",
             "config": {
-              "content": "State store healthy.\nWebSocket connected.\nUI events enabled."
+              "content": "State store healthy.\nHTTP sync active.\nUI events enabled."
             }
           }
         }
@@ -374,3 +386,4 @@ Known events:
 - `todo_toggled`
 
 Treat these as user-originated state changes that may require a follow-up AUIP patch to keep the UI and backend state aligned.
+If a caller needs to confirm the resulting UI state, check `GET /apply-change` or `GET /state` over HTTP.

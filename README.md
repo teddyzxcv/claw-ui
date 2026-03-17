@@ -26,6 +26,17 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) for the dashboard.
 
+The frontend dev server now acts as a same-origin proxy for the FastAPI API and
+WebSocket endpoints. Run the backend locally on port `8000`, then expose only the
+frontend port `3000` when sharing the app externally.
+
+By default the proxy targets `http://127.0.0.1:8000`. To point it somewhere else:
+
+```bash
+cd frontend
+BACKEND_ORIGIN=http://127.0.0.1:8000 npm run dev
+```
+
 ## Install As OpenClaw Skill
 
 This repo now includes an installable skill at `claw-ui/SKILL.md`, so OpenClaw can install it directly from the GitHub repo path instead of requiring a manual copy.

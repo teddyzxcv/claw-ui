@@ -48,15 +48,28 @@ class UIStateStore:
     def __init__(self) -> None:
         self._lock = RLock()
         self._state = UIState.model_validate(default_state())
+        self._revision = 0
 
     def snapshot(self) -> UIState:
         with self._lock:
             return UIState.model_validate(self._state.model_dump())
 
+    def revision(self) -> int:
+        with self._lock:
+            return self._revision
+
+    def snapshot_payload(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "revision": self._revision,
+                "state": self._state.model_dump(mode="json"),
+            }
+
     def set_state(self, new_state: UIState) -> UIState:
         with self._lock:
             self._validate_layout(new_state)
             self._state = UIState.model_validate(new_state.model_dump())
+            self._revision += 1
             return self.snapshot()
 
     def apply_auip(self, message: AUIPMessage) -> dict[str, Any]:
@@ -85,6 +98,7 @@ class UIStateStore:
 
             self._validate_layout(draft)
             self._state = draft
+            self._revision += 1
             return self.snapshot()
 
     def apply_event(self, event_message: UIEventMessage) -> dict[str, Any]:
@@ -248,7 +262,7 @@ class UIStateStore:
                 )
 
     def _operations_dump(self, operations: list[Operation]) -> list[dict[str, Any]]:
-        return [operation.model_dump(mode="json") for operation in operations]
+        return [operation.model_dump(mode="json", exclude_none=True) for operation in operations]
 
     def _set_ui_message(self, state: UIState, view_id: str) -> dict[str, Any]:
         return {

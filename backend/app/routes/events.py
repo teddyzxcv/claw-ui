@@ -4,7 +4,6 @@ from fastapi import APIRouter, HTTPException
 
 from app.models import UIEventMessage
 from app.state import StateValidationError, state_store
-from app.ws.manager import ws_manager
 
 router = APIRouter()
 
@@ -16,5 +15,4 @@ async def post_event(message: UIEventMessage) -> dict:
     except StateValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    await ws_manager.broadcast(outbound)
     return {"ok": True, "message": outbound}
