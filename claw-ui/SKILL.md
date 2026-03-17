@@ -1,22 +1,36 @@
-# claw-ui
+---
+name: claw-ui
+description: Use this skill when working with the OpenClaw dashboard UI through the AUIP backend protocol, especially to create, update, move, remove, or replace widgets by sending `POST /auip` requests with valid widget schemas and layout operations.
+---
 
-Use this skill when you want OpenClaw to create, update, remove, or rearrange widgets in the Claw UI dashboard.
+# Claw UI
 
-## Purpose
+Use this skill when the user wants to change the live Claw dashboard by sending AUIP messages to the backend UI gateway.
 
-Send AUIP messages to the backend UI gateway so the dashboard at `http://localhost:3000` updates in real time through WebSocket sync.
+## When to use this skill
 
-Default backend URL:
+Use it for requests such as:
+
+- add, update, move, or remove dashboard widgets
+- replace the full dashboard state
+- rearrange widgets between columns
+- craft or validate AUIP payloads and `curl` commands
+- interpret frontend UI events that should trigger follow-up AUIP patches
+
+Do not use it for unrelated frontend styling or React component changes inside the codebase unless the user is explicitly asking for AUIP-driven dashboard state changes.
+
+## Endpoint and envelope
+
+The dashboard syncs through the backend:
 
 ```text
-http://localhost:8000
+Frontend: http://localhost:3000
+Backend:  http://localhost:8000
 ```
 
-If your environment uses a different host or port, replace that URL in the examples below.
+If the environment uses a different host or port, substitute that value consistently in examples and commands.
 
-## AUIP envelope
-
-Every request goes to `POST /auip` with JSON:
+Send UI mutations to `POST /auip` with this envelope:
 
 ```json
 {
@@ -29,32 +43,89 @@ Every request goes to `POST /auip` with JSON:
 }
 ```
 
-Supported `type` values:
+Supported AUIP message types:
 
-- `set_ui`: replace the full UI state
+- `set_ui`: replace the entire UI state
 - `patch_ui`: apply incremental operations
+
+## Default workflow
+
+1. Determine whether the user wants a full replacement (`set_ui`) or an incremental change (`patch_ui`).
+2. Preserve `protocol_version: "1.0"` and `target.view_id: "main"`.
+3. Use only supported widget kinds, variants, and operations.
+4. For `patch_ui`, keep the patch to at most 20 operations.
+5. Before updating, moving, or removing a widget, make sure the target widget already exists in the current UI state.
+6. Before adding a widget, choose a fresh widget id and a valid placement.
+7. Return the final payload or `curl` command in a form the user can run directly.
 
 ## Supported widget catalog
 
-Use only these widget types:
+Only use these widget types. Do not invent new `kind` or `variant` values.
 
-- `feed:news`
-  Config:
-  `{"items":[{"title":"...","summary":"...","source":"...","url":"..."}]}`
-- `info:weather`
-  Config:
-  `{"location":"Shanghai","temp_c":19,"condition":"Cloudy","high_c":24,"low_c":14}`
-- `finance:crypto`
-  Config:
-  `{"currency":"USD","items":[{"symbol":"BTC","name":"Bitcoin","price":67200,"change_24h":2.4}]}`
-- `productivity:todo`
-  Config:
-  `{"items":[{"id":"task_1","label":"Ship MVP","done":false}]}`
-- `content:text`
-  Config:
-  `{"content":"Plain text or markdown-like content"}`
+### `feed:news`
 
-Do not invent new `kind:variant` values. The backend rejects unknown widget types.
+```json
+{
+  "items": [
+    {
+      "title": "...",
+      "summary": "...",
+      "source": "...",
+      "url": "..."
+    }
+  ]
+}
+```
+
+### `info:weather`
+
+```json
+{
+  "location": "Shanghai",
+  "temp_c": 19,
+  "condition": "Cloudy",
+  "high_c": 24,
+  "low_c": 14
+}
+```
+
+### `finance:crypto`
+
+```json
+{
+  "currency": "USD",
+  "items": [
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "price": 67200,
+      "change_24h": 2.4
+    }
+  ]
+}
+```
+
+### `productivity:todo`
+
+```json
+{
+  "items": [
+    {
+      "id": "task_1",
+      "label": "Ship MVP",
+      "done": false
+    }
+  ]
+}
+```
+
+### `content:text`
+
+```json
+{
+  "content": "Plain text or markdown-like content"
+}
+```
 
 ## Supported operations
 
@@ -121,8 +192,14 @@ Do not invent new `kind:variant` values. The backend rejects unknown widget type
   "op": "set_layout",
   "layout": {
     "columns": [
-      { "id": "col_1", "widget_ids": ["w_news"] },
-      { "id": "col_2", "widget_ids": [] }
+      {
+        "id": "col_1",
+        "widget_ids": ["w_news"]
+      },
+      {
+        "id": "col_2",
+        "widget_ids": []
+      }
     ]
   }
 }
@@ -130,14 +207,24 @@ Do not invent new `kind:variant` values. The backend rejects unknown widget type
 
 ## Safety rules
 
-- Keep `protocol_version` at `1.0`
-- Use `target.view_id = "main"`
-- Maximum 20 operations per patch
-- Never reuse an existing widget id for a new widget
-- Never remove, move, or update a widget unless it already exists
-- Use only `col_1` and `col_2` unless the state explicitly shows a different layout
+- keep `protocol_version` at `1.0`
+- keep `target.view_id` equal to `"main"`
+- use only `col_1` and `col_2` unless the current UI state shows a different layout
+- never reuse an existing widget id for a new widget
+- never move, update, or remove a widget unless it already exists
+- never exceed 20 operations in one patch
+- never invent unsupported widget schemas
 
-## Curl recipes
+## Response style
+
+When fulfilling a user request with this skill:
+
+- prefer a complete JSON payload or a ready-to-run `curl` command
+- include only the fields required for the requested change
+- if the current widget state is unknown, state the assumption before issuing destructive operations
+- if the user asks for multiple changes, combine them into a single `patch_ui` request when practical
+
+## `curl` recipes
 
 ### Add a text widget
 
@@ -277,11 +364,13 @@ curl -X POST http://localhost:8000/auip \
   }'
 ```
 
-## UI events from the frontend
+## Frontend event follow-up
 
-The dashboard posts user interactions to `POST /event`:
+The dashboard posts user interactions to `POST /event`.
+
+Known events:
 
 - `widget_removed`
 - `todo_toggled`
 
-Treat those as user-originated actions that may require a follow-up AUIP patch.
+Treat these as user-originated state changes that may require a follow-up AUIP patch to keep the UI and backend state aligned.

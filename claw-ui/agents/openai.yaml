@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claw UI"
+  short_description: "Drive dashboard updates via AUIP"
+  default_prompt: "Use $claw-ui to build a valid AUIP payload or curl command for updating the OpenClaw dashboard."
