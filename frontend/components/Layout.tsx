@@ -21,18 +21,17 @@ export default function Layout({ state }: LayoutProps) {
 
   const filled = columns.filter((c) => c.widget_ids.length > 0);
 
+  const gridColsClass = filled.length > 1 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1";
+
   return (
-    <div
-      className="grid items-start gap-3"
-      style={{ gridTemplateColumns: `repeat(${Math.min(filled.length, 2)}, minmax(0, 1fr))` }}
-    >
+    <div className={`grid ${gridColsClass} items-start gap-3`}>
       {filled.map((column, colIdx) => (
         <div key={column.id} className="flex flex-col gap-3">
           {column.widget_ids.map((widgetId, i) => (
             <div
               key={widgetId}
               className="stagger-in"
-              style={{ animationDelay: `${(colIdx * 60) + (i * 60)}ms` }}
+              style={{ animationDelay: `${colIdx * 60 + i * 60}ms` }}
             >
               <WidgetRenderer widgetId={widgetId} state={state} />
             </div>
@@ -42,3 +41,4 @@ export default function Layout({ state }: LayoutProps) {
     </div>
   );
 }
+
