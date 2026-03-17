@@ -43,14 +43,9 @@ export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps)
   };
 
   return (
-    <article className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm shadow-[0_16px_48px_rgba(2,8,20,0.28)] transition hover:border-white/20">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
-            {widget.kind}:{widget.variant}
-          </p>
-          <h3 className="mt-2 text-lg font-medium text-white">{widget.title}</h3>
-        </div>
+    <article className="group relative glass-panel rounded-[20px] p-4 transition">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-[15px] font-medium text-white">{widget.title}</h3>
         <button
           type="button"
           onClick={() =>
@@ -62,18 +57,21 @@ export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps)
               },
             })
           }
-          className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-300 transition hover:border-ember/50 hover:bg-ember/10 hover:text-white"
+          aria-label="Dismiss"
+          className="flex h-6 w-6 items-center justify-center rounded-full text-slate-600 opacity-0 transition hover:bg-white/[0.06] hover:text-slate-300 group-hover:opacity-100"
         >
-          Remove
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" x2="6" y1="6" y2="18" /><line x1="6" x2="18" y1="6" y2="18" />
+          </svg>
         </button>
       </div>
 
       {Component ? (
         <Component widget={widget} />
       ) : (
-        <div className="rounded-2xl border border-dashed border-ember/40 bg-ember/10 px-4 py-6 text-sm text-orange-100">
-          No renderer registered for {key}.
-        </div>
+        <p className="text-sm text-slate-500">
+          Unsupported widget type.
+        </p>
       )}
     </article>
   );

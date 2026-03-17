@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 
 import Layout from "@/components/Layout";
 import { type ConnectionState, useUIStore } from "@/lib/store";
 import type { UIStateData } from "@/lib/types";
 import { useRealtimeUI } from "@/lib/ws";
 
-const connectionTone: Record<ConnectionState, string> = {
-  connected: "border-moss/40 bg-moss/10 text-mist",
-  connecting: "border-accent/40 bg-accent/10 text-mist",
-  reconnecting: "border-ember/40 bg-ember/10 text-mist",
-  offline: "border-white/10 bg-white/5 text-slate-300",
+const STATUS_DOT: Record<ConnectionState, string> = {
+  connected: "bg-moss shadow-[0_0_6px_var(--tw-shadow-color)] shadow-moss/60",
+  connecting: "bg-accent animate-pulse",
+  reconnecting: "bg-ember animate-pulse",
+  offline: "bg-slate-500",
+};
+
+const STATUS_LABEL: Record<ConnectionState, string> = {
+  connected: "Online",
+  connecting: "Connecting\u2026",
+  reconnecting: "Reconnecting\u2026",
+  offline: "Offline",
 };
 
 type DashboardProps = {
@@ -30,105 +37,36 @@ export default function Dashboard({ initialState }: DashboardProps) {
 
   const connectionState = useUIStore((store) => store.connectionState);
   const lastError = useUIStore((store) => store.lastError);
-  const [selectedColumn, setSelectedColumn] = useState<string>("col_1");
   const state = Object.keys(liveState.widgets).length > 0 ? liveState : initialState;
 
-  const totals = useMemo(() => {
-    const widgetCount = Object.keys(state.widgets).length;
-    const columns = state.views.main?.layout.columns ?? [];
-    return {
-      widgetCount,
-      columnCount: columns.length,
-      selectedCount:
-        columns.find((column) => column.id === selectedColumn)?.widget_ids.length ?? 0,
-    };
-  }, [selectedColumn, state.widgets, state.views.main?.layout.columns]);
-
-  const columns = state.views.main?.layout.columns ?? [];
-
   return (
-    <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <section className="glass-panel stagger-in rounded-[28px] p-6 shadow-glow">
-          <p className="font-mono text-xs uppercase tracking-[0.35em] text-accent">
-            Agent-Native UI
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white">
-            Realtime dashboard runtime
-          </h1>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-slate-300">
-            The backend owns AUIP state, the client renders it, and every interaction
-            returns to the gateway as a structured UI event.
-          </p>
-
-          <div
-            className={`mt-6 inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-[0.28em] ${connectionTone[connectionState]}`}
-          >
-            {connectionState}
+    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-5xl">
+        {/* ── Top bar ── */}
+        <header className="stagger-in mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-cyan-400">
+              <svg className="h-3.5 w-3.5 text-[#08111d]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-1 15.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.22.21-1.79L9 13v1c0 1.1.9 2 2 2v1.93Zm6.9-2.54A1.99 1.99 0 0 0 16 14h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V5h2c1.1 0 2-.9 2-2h.06A8.006 8.006 0 0 1 20 12c0 1.26-.3 2.45-.82 3.51l-.28-.12Z" />
+              </svg>
+            </div>
+            <span className="text-sm font-medium text-white/80">OpenClaw</span>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                Widgets
-              </p>
-              <p className="mt-3 text-3xl font-semibold text-white">
-                {totals.widgetCount}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                Columns
-              </p>
-              <p className="mt-3 text-3xl font-semibold text-white">
-                {totals.columnCount}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                Focus column
-              </p>
-              <p className="mt-3 text-3xl font-semibold text-white">
-                {totals.selectedCount}
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[connectionState]}`} />
+            <span className="text-xs text-slate-500">{STATUS_LABEL[connectionState]}</span>
           </div>
+        </header>
 
-          <div className="mt-8">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-              Inspect column
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {columns.map((column) => {
-                const active = selectedColumn === column.id;
-                return (
-                  <button
-                    key={column.id}
-                    type="button"
-                    onClick={() => setSelectedColumn(column.id)}
-                    className={`rounded-full border px-3 py-2 text-sm transition ${
-                      active
-                        ? "border-accent bg-[var(--accent-soft)] text-white"
-                        : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20"
-                    }`}
-                  >
-                    {column.id}
-                  </button>
-                );
-              })}
-            </div>
+        {lastError && (
+          <div className="stagger-in mb-5 rounded-xl border border-ember/25 bg-ember/10 px-4 py-3 text-[13px] leading-5 text-orange-100">
+            {lastError}
           </div>
+        )}
 
-          {lastError ? (
-            <div className="mt-8 rounded-2xl border border-ember/30 bg-ember/10 p-4 text-sm text-orange-100">
-              {lastError}
-            </div>
-          ) : null}
-        </section>
-
-        <section className="stagger-in" style={{ animationDelay: "120ms" }}>
-          <Layout state={state} />
-        </section>
+        {/* ── Content ── */}
+        <Layout state={state} />
       </div>
     </main>
   );
