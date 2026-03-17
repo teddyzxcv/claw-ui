@@ -9,12 +9,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        shell: "#07111f",
-        mist: "#dceaf8",
-        panel: "#0d1c31",
-        panelAlt: "#122847",
-        accent: "#6ae3ff",
-        ember: "#ff8a5b",
+        shell: "#140606",
+        mist: "#fff6f2",
+        panel: "#180808",
+        panelAlt: "#2b0b0b",
+        accent: "#ff6a3d",
+        ember: "#ff3d30",
         moss: "#76caa8",
       },
       boxShadow: {
