@@ -4,7 +4,8 @@ Agent-Native UI MVP with:
 
 - `backend/`: FastAPI UI gateway, in-memory AUIP state store, websocket broadcaster
 - `frontend/`: Next.js realtime dashboard renderer with Zustand state
-- `skill/`: OpenClaw skill instructions for composing AUIP messages
+- `skill/`: original skill docs
+- `claw-ui/`: GitHub-installable OpenClaw skill folder
 
 ## Run
 
@@ -24,6 +25,24 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) for the dashboard.
+
+## Install As OpenClaw Skill
+
+This repo now includes an installable skill at `claw-ui/SKILL.md`, so OpenClaw can install it directly from the GitHub repo path instead of requiring a manual copy.
+
+If the repo is published at `OWNER/REPO`, install with:
+
+```bash
+scripts/install-skill-from-github.py --repo OWNER/REPO --path claw-ui
+```
+
+Or with a direct GitHub URL:
+
+```bash
+scripts/install-skill-from-github.py --url https://github.com/OWNER/REPO/tree/main/claw-ui
+```
+
+Because the folder name is `claw-ui`, the installed skill name will also be `claw-ui`.
 
 ## Example AUIP patch
 
