@@ -100,3 +100,21 @@ The frontend posts user actions back to `POST /event`:
 
 - `widget_removed`
 - `todo_toggled`
+
+## Iframe widget
+
+To render agent-generated custom content, use a `content:iframe` widget and put the raw iframe markup in `config.iframe`:
+
+```json
+{
+  "id": "w_custom_embed",
+  "kind": "content",
+  "variant": "iframe",
+  "title": "Custom Preview",
+  "config": {
+    "iframe": "<iframe title=\"Custom Preview\" srcdoc=\"<html><body style='margin:0;font-family:sans-serif'><div style='padding:24px'>Hello from OpenClaw</div></body></html>\" sandbox=\"allow-scripts\" height=\"280\"></iframe>"
+  }
+}
+```
+
+The renderer only accepts a single raw `<iframe>` element and maps its safe attributes onto a real iframe component.

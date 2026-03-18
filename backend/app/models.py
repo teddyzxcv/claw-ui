@@ -11,6 +11,7 @@ SUPPORTED_WIDGET_TYPES = {
     ("finance", "crypto"),
     ("productivity", "todo"),
     ("content", "text"),
+    ("content", "iframe"),
 }
 
 

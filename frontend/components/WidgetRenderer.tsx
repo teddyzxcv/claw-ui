@@ -2,6 +2,7 @@
 
 import NewsWidget from "@/components/widgets/NewsWidget";
 import CryptoWidget from "@/components/widgets/CryptoWidget";
+import IframeWidget from "@/components/widgets/IframeWidget";
 import TextWidget from "@/components/widgets/TextWidget";
 import TodoWidget from "@/components/widgets/TodoWidget";
 import WeatherWidget from "@/components/widgets/WeatherWidget";
@@ -20,6 +21,7 @@ const registry: Record<string, (props: { widget: Widget }) => JSX.Element> = {
   "finance:crypto": CryptoWidget,
   "productivity:todo": TodoWidget,
   "content:text": TextWidget,
+  "content:iframe": IframeWidget,
 };
 
 export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps) {
@@ -33,6 +35,7 @@ export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps)
 
   const key = `${widget.kind}:${widget.variant}`;
   const Component = registry[key];
+  const isIframeWidget = key === "content:iframe";
 
   const sendEvent = async (event: UIEvent) => {
     try {
@@ -43,31 +46,39 @@ export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps)
   };
 
   return (
-    <article className="group glass-panel relative rounded-xl p-4 transition duration-200 ease-in-out hover:-translate-y-0.5 hover:border-coralMid/70">
-      <div className="mb-4 flex items-start justify-between gap-3 border-b border-line pb-3">
-        <div className="min-w-0">
-          <h3 className="text-[18px] leading-6 text-text">{widget.title}</h3>
+    <article
+      className={
+        isIframeWidget
+          ? "group glass-panel relative overflow-hidden rounded-xl transition duration-200 ease-in-out hover:-translate-y-0.5 hover:border-coralMid/70"
+          : "group glass-panel relative rounded-xl p-4 transition duration-200 ease-in-out hover:-translate-y-0.5 hover:border-coralMid/70"
+      }
+    >
+      {!isIframeWidget ? (
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-line pb-3">
+          <div className="min-w-0">
+            <h3 className="text-[18px] leading-6 text-text">{widget.title}</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              void sendEvent({
+                type: "ui_event",
+                payload: {
+                  event: "widget_removed",
+                  widget_id: widget.id,
+                },
+              })
+            }
+            aria-label="Remove widget"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-quiet opacity-0 transition hover:border-line hover:bg-panelAlt hover:text-coral group-hover:opacity-100"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" x2="6" y1="6" y2="18" />
+              <line x1="6" x2="18" y1="6" y2="18" />
+            </svg>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            void sendEvent({
-              type: "ui_event",
-              payload: {
-                event: "widget_removed",
-                widget_id: widget.id,
-              },
-            })
-          }
-          aria-label="Remove widget"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-quiet opacity-0 transition hover:border-line hover:bg-panelAlt hover:text-coral group-hover:opacity-100"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" x2="6" y1="6" y2="18" />
-            <line x1="6" x2="18" y1="6" y2="18" />
-          </svg>
-        </button>
-      </div>
+      ) : null}
 
       {Component ? (
         <Component widget={widget} />

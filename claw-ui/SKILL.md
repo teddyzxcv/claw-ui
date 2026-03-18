@@ -170,6 +170,25 @@ Only use these widget types. Do not invent new `kind` or `variant` values.
 }
 ```
 
+### `content:iframe`
+
+Use this when OpenClaw should render custom embedded content from a raw iframe tag.
+
+```json
+{
+  "iframe": "<iframe title=\"Custom Preview\" srcdoc=\"<html><body style='margin:0;font-family:sans-serif'><div style='padding:24px'>Hello from OpenClaw</div></body></html>\" sandbox=\"allow-scripts\" height=\"280\"></iframe>"
+}
+```
+
+Rules:
+
+- put the full raw `<iframe ...></iframe>` markup in `config.iframe`
+- use exactly one iframe element, not a larger HTML document
+- prefer `srcdoc` for agent-generated custom content
+- include a `title`
+- set `sandbox` deliberately based on the embed's needs
+- prefer file-based JSON posting when `srcdoc` content is long or heavily quoted
+
 ## Supported operations
 
 Use only these `patch_ui` operations:
@@ -195,6 +214,7 @@ Before `update_widget`, `move_widget`, or `remove_widget`, confirm the widget id
 - never invent unsupported widget schemas
 - never rely on websocket delivery
 - never hand-escape large inline JSON blobs in shell commands
+- never put arbitrary HTML outside the single raw iframe string in `config.iframe`
 
 ## Large payload guidance
 

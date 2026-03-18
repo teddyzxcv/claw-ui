@@ -3,7 +3,8 @@ export type WidgetKey =
   | "info:weather"
   | "finance:crypto"
   | "productivity:todo"
-  | "content:text";
+  | "content:text"
+  | "content:iframe";
 
 export type Widget = {
   id: string;
@@ -140,4 +141,8 @@ export type TodoItem = {
   id: string;
   label: string;
   done?: boolean;
+};
+
+export type IframeConfig = {
+  iframe?: string;
 };

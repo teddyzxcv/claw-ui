@@ -1,0 +1,27 @@
+{
+  "protocol_version": "1.0",
+  "type": "patch_ui",
+  "target": {
+    "view_id": "main"
+  },
+  "payload": {
+    "operations": [
+      {
+        "op": "add_widget",
+        "widget": {
+          "id": "w_custom_embed",
+          "kind": "content",
+          "variant": "iframe",
+          "title": "Custom Preview",
+          "config": {
+            "iframe": "<iframe title=\"Custom Preview\" srcdoc=\"<html><body style='margin:0;background:#0f0f10;color:#ffffff;font-family:Inter,Arial,sans-serif'><div style='padding:24px'><div style='font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#b0b0b5;margin-bottom:12px'>OpenClaw Generated</div><h1 style='margin:0 0 12px;font-size:28px;line-height:1.2'>Custom iframe widget is live</h1><p style='margin:0 0 18px;color:#d0d0d5;line-height:1.6'>This block is rendered from raw iframe markup stored in the widget config.</p><div style='display:inline-block;padding:10px 14px;border-radius:999px;background:#e63946;color:#fff;font-size:14px'>localhost:3000</div></div></body></html>\" sandbox=\"allow-scripts\" height=\"320\"></iframe>"
+          }
+        },
+        "placement": {
+          "column_id": "col_1",
+          "position": 2
+        }
+      }
+    ]
+  }
+}
