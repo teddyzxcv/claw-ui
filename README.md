@@ -58,7 +58,7 @@ Because the folder name is `claw-ui`, the installed skill name will also be `cla
 ## Example AUIP patch
 
 ```bash
-curl -X POST http://localhost:8000/auip \
+curl -X POST http://127.0.0.1:8000/auip \
   -H "Content-Type: application/json" \
   -d '{
     "protocol_version": "1.0",

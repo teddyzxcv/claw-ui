@@ -13,6 +13,7 @@ import { postUIEvent } from "@/lib/ws";
 type WidgetRendererProps = {
   widgetId: string;
   state: UIStateData;
+  widgetOverride?: Widget;
 };
 
 const registry: Record<string, (props: { widget: Widget }) => JSX.Element> = {
@@ -24,10 +25,10 @@ const registry: Record<string, (props: { widget: Widget }) => JSX.Element> = {
   "content:iframe": IframeWidget,
 };
 
-export default function WidgetRenderer({ widgetId, state }: WidgetRendererProps) {
+export default function WidgetRenderer({ widgetId, state, widgetOverride }: WidgetRendererProps) {
   const liveWidget = useUIStore((store) => store.state.widgets[widgetId]);
   const setLastError = useUIStore((store) => store.setLastError);
-  const widget = liveWidget ?? state.widgets[widgetId];
+  const widget = widgetOverride ?? liveWidget ?? state.widgets[widgetId];
 
   if (!widget) {
     return null;

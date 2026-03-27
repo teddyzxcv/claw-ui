@@ -24,7 +24,7 @@ Do not use it for ordinary frontend component or styling work unless the user ex
 
 ```text
 Frontend: http://localhost:3000
-Backend:  http://localhost:8000
+Backend:  http://127.0.0.1:8000
 ```
 
 If the environment uses different ports or hosts, substitute them consistently.
@@ -228,7 +228,7 @@ Prefer one of these patterns:
 Safer file-based pattern:
 
 ```bash
-curl -X POST http://localhost:8000/auip \
+curl -X POST http://127.0.0.1:8000/auip \
   -H "Content-Type: application/json" \
   --data @payload.json
 ```
@@ -252,7 +252,7 @@ Prefer short, practical responses that help the user iterate quickly. When the r
 ### Inspect current state
 
 ```bash
-curl -sS http://localhost:8000/state
+curl -sS http://127.0.0.1:8000/state
 ```
 
 ### Replace an empty dashboard with a two-column redesign
@@ -308,7 +308,7 @@ Plan:
 Post it safely:
 
 ```bash
-curl -X POST http://localhost:8000/auip \
+curl -X POST http://127.0.0.1:8000/auip \
   -H "Content-Type: application/json" \
   --data @payload.json
 ```
@@ -316,7 +316,7 @@ curl -X POST http://localhost:8000/auip \
 Verify:
 
 ```bash
-curl -sS http://localhost:8000/state
+curl -sS http://127.0.0.1:8000/state
 ```
 
 ### Patch an existing known widget
@@ -328,7 +328,7 @@ Plan:
 - use `patch_ui` because the widget id is already known from fresh state
 
 ```bash
-curl -X POST http://localhost:8000/auip \
+curl -X POST http://127.0.0.1:8000/auip \
   -H "Content-Type: application/json" \
   -d '{
     "protocol_version": "1.0",
@@ -354,7 +354,7 @@ curl -X POST http://localhost:8000/auip \
 Verify:
 
 ```bash
-curl -sS http://localhost:8000/state
+curl -sS http://127.0.0.1:8000/state
 ```
 
 ## Troubleshooting
@@ -367,8 +367,8 @@ curl -sS http://localhost:8000/state
 
 ### Connection failure
 
-- confirm the backend is running on `http://localhost:8000`
-- retry `curl -sS http://localhost:8000/state`
+- confirm the backend is running on `http://127.0.0.1:8000`
+- retry `curl -sS http://127.0.0.1:8000/state`
 - if ports differ in the environment, update every example consistently
 
 ### Unknown widget ID during patching

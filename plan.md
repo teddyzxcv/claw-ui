@@ -212,7 +212,7 @@ Example skill instruction to the agent:
 
 ```
 To add a news widget:
-bash curl -X POST http://localhost:8000/auip -H "Content-Type: application/json" -d '{
+bash curl -X POST http://127.0.0.1:8000/auip -H "Content-Type: application/json" -d '{
   "protocol_version": "1.0",
   "type": "patch_ui",
   "target": {"view_id": "main"},
